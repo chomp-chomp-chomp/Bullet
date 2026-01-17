@@ -79,6 +79,127 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Deployment to Vercel
+
+The easiest way to deploy this app for public access is using Vercel, which is optimized for Next.js applications and offers a generous free tier.
+
+### Prerequisites
+
+- A GitHub account with this repository
+- A Supabase project (see Setup Instructions above)
+- Your Supabase credentials (URL and Anon Key)
+
+### Step-by-Step Deployment
+
+#### 1. Sign Up for Vercel
+
+1. Go to [vercel.com](https://vercel.com)
+2. Click "Sign Up" and choose "Continue with GitHub"
+3. Authorize Vercel to access your GitHub account
+
+#### 2. Import Your Repository
+
+1. From the Vercel dashboard, click "Add New Project"
+2. Find and select your `Bullet` repository
+3. Click "Import"
+
+#### 3. Configure Your Project
+
+**Framework Preset**: Vercel should auto-detect Next.js (no changes needed)
+
+**Root Directory**: Leave as `.` (root)
+
+**Build Settings**: Use defaults
+- Build Command: `next build`
+- Output Directory: `.next`
+- Install Command: `npm install`
+
+#### 4. Add Environment Variables
+
+Before deploying, add your Supabase credentials:
+
+1. Click "Environment Variables" section
+2. Add the following variables:
+
+| Name | Value | Environment |
+|------|-------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxxx.supabase.co` | Production, Preview, Development |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJ...your-anon-key` | Production, Preview, Development |
+
+**Important**:
+- Replace the values with your actual Supabase credentials from your Supabase dashboard (Settings > API)
+- Make sure to select all environments (Production, Preview, Development)
+
+#### 5. Deploy
+
+1. Click "Deploy"
+2. Wait 2-3 minutes for the build to complete
+3. Once done, you'll see a success screen with your live URL
+
+#### 6. Configure Supabase Redirects
+
+After deployment, update your Supabase authentication settings:
+
+1. Go to your Supabase dashboard
+2. Navigate to Authentication > URL Configuration
+3. Add your Vercel URL to "Site URL": `https://your-app.vercel.app`
+4. Add to "Redirect URLs":
+   - `https://your-app.vercel.app/**`
+   - `http://localhost:3000/**` (for local development)
+
+### Accessing Your Deployed App
+
+Your app will be live at: `https://your-project-name.vercel.app`
+
+Users can now:
+1. Visit your Vercel URL
+2. Enter their email to receive a magic link
+3. Click the magic link to authenticate
+4. Start creating spaces and managing tasks
+
+### Automatic Deployments
+
+Vercel automatically deploys when you push to your GitHub repository:
+
+- **Production**: Pushes to your main/master branch
+- **Preview**: Pull requests and other branches
+
+Every commit creates a deployment preview, perfect for testing changes before merging.
+
+### Managing Your Deployment
+
+**View Logs**:
+- Go to your project in Vercel dashboard
+- Click "Deployments" tab
+- Click any deployment to see logs
+
+**Update Environment Variables**:
+- Go to Settings > Environment Variables
+- Edit or add new variables
+- Redeploy for changes to take effect
+
+**Custom Domain** (Optional):
+1. Go to Settings > Domains
+2. Add your custom domain
+3. Follow DNS configuration instructions
+
+### Troubleshooting Deployment
+
+**Build Fails**:
+- Check the build logs in Vercel
+- Ensure all dependencies are in `package.json`
+- Verify TypeScript has no errors: `npm run build` locally
+
+**Authentication Issues**:
+- Verify Supabase environment variables are correct
+- Check that redirect URLs are configured in Supabase
+- Ensure Site URL matches your Vercel domain
+
+**Database Connection Issues**:
+- Verify you ran the `supabase/schema.sql` in your Supabase project
+- Check RLS policies are enabled on all tables
+- Test database connection in Supabase dashboard
+
 ## How It Works
 
 ### Authentication Flow
