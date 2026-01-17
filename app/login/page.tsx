@@ -90,7 +90,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-xs text-gray-500 mt-4">
-          We'll send you a magic link to sign in without a password
+          We&apos;ll send you a magic link to sign in without a password
         </p>
       </div>
     </div>
