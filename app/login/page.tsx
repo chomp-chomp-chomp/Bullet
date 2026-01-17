@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom"; // React 18.3+ hook from react-dom
 import { createClient } from "@/lib/supabase/client";
 
 function SubmitButton() {
