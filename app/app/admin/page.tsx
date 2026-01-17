@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { InviteUserForm } from "./InviteUserForm";
 import { UsersList } from "./UsersList";
 import { getAllUsers } from "./actions";
 import Link from "next/link";
@@ -38,12 +37,35 @@ export default async function AdminPage() {
         {/* Invite User Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Invite New User
+            How to Invite New Users
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Send an invitation email to give someone access to Bullet Journal.
-          </p>
-          <InviteUserForm />
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              To invite new users, use the Supabase Dashboard:
+            </p>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
+              <li>
+                Go to{" "}
+                <a
+                  href="https://supabase.com/dashboard/project/_/auth/users"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 underline font-medium"
+                >
+                  Supabase Dashboard → Authentication → Users
+                </a>
+              </li>
+              <li>Click the &quot;Invite user&quot; button</li>
+              <li>Enter the email address of the person you want to invite</li>
+              <li>Click &quot;Send invitation&quot;</li>
+            </ol>
+            <div className="bg-green-50 border border-green-200 rounded-md p-3">
+              <p className="text-sm text-green-800">
+                ✅ The user will receive a magic link via email and can access
+                the app immediately after clicking it.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Users List Section */}
