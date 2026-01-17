@@ -1,10 +1,18 @@
 -- Bullet Journal App Schema
 -- Run this in your Supabase SQL editor
 
+-- ============================================================
+-- STEP 1: Helper Functions
+-- ============================================================
+
 -- Helper function to get current user's email from JWT
 CREATE OR REPLACE FUNCTION auth_email() RETURNS text AS $$
   SELECT current_setting('request.jwt.claim.email', true)::text;
 $$ LANGUAGE sql STABLE;
+
+-- ============================================================
+-- STEP 2: Create All Tables (without RLS policies)
+-- ============================================================
 
 -- Profiles table
 CREATE TABLE IF NOT EXISTS profiles (
@@ -14,28 +22,77 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at timestamptz DEFAULT now()
 );
 
--- Enable RLS
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+-- Spaces table
+CREATE TABLE IF NOT EXISTS spaces (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  created_by uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
 
--- Profiles RLS Policies
-CREATE POLICY "Users can view own profile"
-  ON profiles FOR SELECT
-  USING (auth.uid() = id);
+-- Space members table
+CREATE TABLE IF NOT EXISTS space_members (
+  space_id uuid REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  role text NOT NULL DEFAULT 'member',
+  created_at timestamptz DEFAULT now(),
+  PRIMARY KEY (space_id, user_id)
+);
 
-CREATE POLICY "Users can view profiles of space members"
-  ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM space_members sm1
-      JOIN space_members sm2 ON sm1.space_id = sm2.space_id
-      WHERE sm1.user_id = auth.uid()
-        AND sm2.user_id = profiles.id
-    )
-  );
+-- Space invites table
+CREATE TABLE IF NOT EXISTS space_invites (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  space_id uuid REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
+  email text NOT NULL,
+  role text NOT NULL DEFAULT 'member',
+  invited_by uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  accepted_at timestamptz,
+  UNIQUE(space_id, email)
+);
 
-CREATE POLICY "Users can update own profile"
-  ON profiles FOR UPDATE
-  USING (auth.uid() = id);
+-- Daily pages table
+CREATE TABLE IF NOT EXISTS daily_pages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  space_id uuid REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
+  page_date date NOT NULL,
+  created_by uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(space_id, page_date)
+);
+
+-- Bullets table
+CREATE TABLE IF NOT EXISTS bullets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  space_id uuid REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
+  page_id uuid REFERENCES daily_pages(id) ON DELETE CASCADE NOT NULL,
+  created_by uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  assigned_to uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  content text NOT NULL,
+  status text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'done', 'canceled')),
+  is_private boolean DEFAULT false,
+  priority text,
+  tags text[],
+  created_at timestamptz DEFAULT now(),
+  completed_at timestamptz,
+  sort_key bigint DEFAULT extract(epoch from now()) * 1000000
+);
+
+-- ============================================================
+-- STEP 3: Create Indexes
+-- ============================================================
+
+CREATE INDEX IF NOT EXISTS bullets_sort_key_idx ON bullets(page_id, sort_key);
+CREATE INDEX IF NOT EXISTS space_members_user_id_idx ON space_members(user_id);
+CREATE INDEX IF NOT EXISTS space_members_space_id_idx ON space_members(space_id);
+CREATE INDEX IF NOT EXISTS daily_pages_space_date_idx ON daily_pages(space_id, page_date);
+CREATE INDEX IF NOT EXISTS bullets_page_id_idx ON bullets(page_id);
+CREATE INDEX IF NOT EXISTS bullets_assigned_to_idx ON bullets(assigned_to);
+CREATE INDEX IF NOT EXISTS space_invites_email_idx ON space_invites(email);
+
+-- ============================================================
+-- STEP 4: Create Triggers and Functions
+-- ============================================================
 
 -- Auto-create profile on user signup
 CREATE OR REPLACE FUNCTION handle_new_user()
@@ -58,16 +115,40 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION handle_new_user();
 
--- Spaces table
-CREATE TABLE IF NOT EXISTS spaces (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  created_by uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  created_at timestamptz DEFAULT now()
-);
+-- ============================================================
+-- STEP 5: Enable Row Level Security on All Tables
+-- ============================================================
 
--- Enable RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE spaces ENABLE ROW LEVEL SECURITY;
+ALTER TABLE space_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE space_invites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_pages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bullets ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- STEP 6: Create RLS Policies
+-- ============================================================
+
+-- Profiles RLS Policies
+CREATE POLICY "Users can view own profile"
+  ON profiles FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can view profiles of space members"
+  ON profiles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM space_members sm1
+      JOIN space_members sm2 ON sm1.space_id = sm2.space_id
+      WHERE sm1.user_id = auth.uid()
+        AND sm2.user_id = profiles.id
+    )
+  );
+
+CREATE POLICY "Users can update own profile"
+  ON profiles FOR UPDATE
+  USING (auth.uid() = id);
 
 -- Spaces RLS Policies
 CREATE POLICY "Users can view spaces they are members of"
@@ -91,18 +172,6 @@ CREATE POLICY "Only space owners can update spaces"
 CREATE POLICY "Only space owners can delete spaces"
   ON spaces FOR DELETE
   USING (created_by = auth.uid());
-
--- Space members table
-CREATE TABLE IF NOT EXISTS space_members (
-  space_id uuid REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
-  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  role text NOT NULL DEFAULT 'member',
-  created_at timestamptz DEFAULT now(),
-  PRIMARY KEY (space_id, user_id)
-);
-
--- Enable RLS
-ALTER TABLE space_members ENABLE ROW LEVEL SECURITY;
 
 -- Space members RLS Policies
 CREATE POLICY "Users can view members of their spaces"
@@ -134,21 +203,6 @@ CREATE POLICY "Only space owners can remove members"
         AND spaces.created_by = auth.uid()
     )
   );
-
--- Space invites table
-CREATE TABLE IF NOT EXISTS space_invites (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  space_id uuid REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
-  email text NOT NULL,
-  role text NOT NULL DEFAULT 'member',
-  invited_by uuid REFERENCES auth.users(id) ON DELETE CASCADE,
-  created_at timestamptz DEFAULT now(),
-  accepted_at timestamptz,
-  UNIQUE(space_id, email)
-);
-
--- Enable RLS
-ALTER TABLE space_invites ENABLE ROW LEVEL SECURITY;
 
 -- Space invites RLS Policies
 CREATE POLICY "Space owners can view invites for their spaces"
@@ -191,19 +245,6 @@ CREATE POLICY "Invitees can accept their invites"
   ON space_invites FOR UPDATE
   USING (email = auth_email() AND accepted_at IS NULL)
   WITH CHECK (email = auth_email());
-
--- Daily pages table
-CREATE TABLE IF NOT EXISTS daily_pages (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  space_id uuid REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
-  page_date date NOT NULL,
-  created_by uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  created_at timestamptz DEFAULT now(),
-  UNIQUE(space_id, page_date)
-);
-
--- Enable RLS
-ALTER TABLE daily_pages ENABLE ROW LEVEL SECURITY;
 
 -- Daily pages RLS Policies
 CREATE POLICY "Space members can view daily pages"
@@ -249,29 +290,6 @@ CREATE POLICY "Page creators and owners can delete daily pages"
     )
   );
 
--- Bullets table
-CREATE TABLE IF NOT EXISTS bullets (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  space_id uuid REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
-  page_id uuid REFERENCES daily_pages(id) ON DELETE CASCADE NOT NULL,
-  created_by uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  assigned_to uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  content text NOT NULL,
-  status text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'done', 'canceled')),
-  is_private boolean DEFAULT false,
-  priority text,
-  tags text[],
-  created_at timestamptz DEFAULT now(),
-  completed_at timestamptz,
-  sort_key bigint DEFAULT extract(epoch from now()) * 1000000
-);
-
--- Create index for sorting
-CREATE INDEX IF NOT EXISTS bullets_sort_key_idx ON bullets(page_id, sort_key);
-
--- Enable RLS
-ALTER TABLE bullets ENABLE ROW LEVEL SECURITY;
-
 -- Bullets RLS Policies
 CREATE POLICY "Space members can view non-private bullets"
   ON bullets FOR SELECT
@@ -302,11 +320,3 @@ CREATE POLICY "Bullet creators can update their bullets"
 CREATE POLICY "Bullet creators can delete their bullets"
   ON bullets FOR DELETE
   USING (created_by = auth.uid());
-
--- Create indexes for performance
-CREATE INDEX IF NOT EXISTS space_members_user_id_idx ON space_members(user_id);
-CREATE INDEX IF NOT EXISTS space_members_space_id_idx ON space_members(space_id);
-CREATE INDEX IF NOT EXISTS daily_pages_space_date_idx ON daily_pages(space_id, page_date);
-CREATE INDEX IF NOT EXISTS bullets_page_id_idx ON bullets(page_id);
-CREATE INDEX IF NOT EXISTS bullets_assigned_to_idx ON bullets(assigned_to);
-CREATE INDEX IF NOT EXISTS space_invites_email_idx ON space_invites(email);
