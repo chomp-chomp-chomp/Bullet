@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email text UNIQUE NOT NULL,
   display_name text,
+  is_admin boolean DEFAULT false,
   created_at timestamptz DEFAULT now()
 );
 
@@ -97,12 +98,18 @@ CREATE INDEX IF NOT EXISTS space_invites_email_idx ON space_invites(email);
 -- Auto-create profile on user signup
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  is_first_user boolean;
 BEGIN
-  INSERT INTO public.profiles (id, email, display_name)
+  -- Check if this is the first user
+  SELECT NOT EXISTS (SELECT 1 FROM public.profiles LIMIT 1) INTO is_first_user;
+
+  INSERT INTO public.profiles (id, email, display_name, is_admin)
   VALUES (
     new.id,
     new.email,
-    COALESCE(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1))
+    COALESCE(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1)),
+    is_first_user  -- First user becomes admin automatically
   );
   RETURN new;
 END;
@@ -149,6 +156,16 @@ CREATE POLICY "Users can view profiles of space members"
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
+
+CREATE POLICY "Admins can view all profiles"
+  ON profiles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+        AND profiles.is_admin = true
+    )
+  );
 
 -- Spaces RLS Policies
 CREATE POLICY "Users can view spaces they are members of"

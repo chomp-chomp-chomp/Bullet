@@ -7,6 +7,7 @@ type User = {
   id: string;
   email: string;
   display_name: string | null;
+  is_admin: boolean;
   created_at: string;
 };
 
@@ -57,6 +58,11 @@ export function UsersList({
               {user.id === currentUserId && (
                 <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                   You
+                </span>
+              )}
+              {user.is_admin && (
+                <span className="ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-medium">
+                  Admin
                 </span>
               )}
             </div>

@@ -73,9 +73,30 @@ export function InviteUserForm() {
         {loading ? "Sending Invitation..." : "Send Invitation"}
       </button>
 
-      <p className="text-xs text-gray-500">
-        The user will receive an email with a magic link to access the app.
-      </p>
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+        <p className="text-xs text-blue-900 font-medium mb-1">
+          📝 How to invite users:
+        </p>
+        <ol className="text-xs text-blue-800 list-decimal list-inside space-y-1">
+          <li>
+            Go to{" "}
+            <a
+              href="https://supabase.com/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-blue-900"
+            >
+              Supabase Dashboard
+            </a>
+          </li>
+          <li>Navigate to Authentication → Users</li>
+          <li>Click &quot;Invite user&quot;</li>
+          <li>Enter the email address and send</li>
+        </ol>
+        <p className="text-xs text-blue-700 mt-2">
+          They&apos;ll receive a magic link to access the app instantly.
+        </p>
+      </div>
     </form>
   );
 }
