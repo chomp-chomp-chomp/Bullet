@@ -200,6 +200,154 @@ Every commit creates a deployment preview, perfect for testing changes before me
 - Check RLS policies are enabled on all tables
 - Test database connection in Supabase dashboard
 
+## User Management & Admin Panel
+
+The app includes a built-in admin panel for managing user access. By default, Supabase allows anyone to sign up, but you'll want to control who has access.
+
+### Disable Public Signups (Recommended)
+
+**Do this immediately after deploying:**
+
+1. Go to your **Supabase Dashboard**
+2. Navigate to **Authentication → Providers**
+3. Click on **"Email"**
+4. **Uncheck "Enable email signup"** (keep "Enable email login" checked)
+5. Click **Save**
+
+Now only you can invite new users - no one can self-register!
+
+### Accessing the Admin Panel
+
+1. Log in to your app
+2. Click **"Admin"** in the top navigation bar
+3. You'll see the admin panel at `/app/admin`
+
+### Inviting New Users
+
+**Method 1: Via Admin Panel (Easiest)**
+
+1. Go to **Admin Panel** (`/app/admin`)
+2. Enter the user's email address
+3. Click **"Send Invitation"**
+4. The user receives a magic link via email
+5. They click the link and are automatically logged in
+
+**Method 2: Via Supabase Dashboard**
+
+1. Go to **Supabase Dashboard → Authentication → Users**
+2. Click **"Invite user"**
+3. Enter their email
+4. They'll receive a magic link from Supabase
+
+### Managing Users
+
+In the Admin Panel, you can:
+
+- **View all users** with their email, display name, and join date
+- **Remove users** (except yourself)
+- **See who's been invited** recently
+
+### Optional: Use Resend for Better Emails
+
+Supabase's built-in emails work but may land in spam. For production, use Resend for reliable delivery.
+
+#### Step 1: Create a Resend Account
+
+1. Go to [resend.com](https://resend.com)
+2. Sign up (free tier: 3,000 emails/month, 100/day)
+3. Verify your email
+
+#### Step 2: Get Your API Key
+
+1. In Resend dashboard, go to **API Keys**
+2. Click **"Create API Key"**
+3. Name it "Bullet Journal"
+4. Copy the API key (starts with `re_`)
+
+#### Step 3: Set Up Your Domain (Optional but Recommended)
+
+**For verified domain (better deliverability):**
+
+1. In Resend, go to **Domains**
+2. Click **"Add Domain"**
+3. Enter your domain: `chompchomp.cc`
+4. Add the DNS records Resend provides
+5. Wait for verification (usually ~10 minutes)
+
+**For testing (no domain setup):**
+
+You can use `onboarding@resend.dev` as the sender, but emails may be limited.
+
+#### Step 4: Add Environment Variables
+
+**In Vercel:**
+
+1. Go to **Settings → Environment Variables**
+2. Add these variables:
+
+| Variable | Value | Example |
+|----------|-------|---------|
+| `RESEND_API_KEY` | Your Resend API key | `re_123abc...` |
+| `RESEND_FROM_EMAIL` | Your sender email | `Bullet Journal <noreply@chompchomp.cc>` |
+| `NEXT_PUBLIC_APP_URL` | Your app URL | `https://bullet.chompchomp.cc` |
+
+3. Click **"Save"**
+4. Redeploy your app
+
+**Locally (for testing):**
+
+Add to `.env.local`:
+```env
+RESEND_API_KEY=re_your_api_key_here
+RESEND_FROM_EMAIL=Bullet Journal <noreply@chompchomp.cc>
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+#### Step 5: Configure Supabase to Disable Emails (Optional)
+
+If you want to use ONLY Resend for emails:
+
+1. Go to **Supabase Dashboard → Authentication → Email Templates**
+2. Disable **"Enable email confirmations"**
+
+**Note:** The current implementation uses Supabase's magic links. To fully switch to Resend, you'd need to implement custom token generation, which is beyond this basic setup.
+
+### How Email Invitations Work
+
+1. **Admin invites user** via the Admin Panel
+2. **Supabase generates** a magic link
+3. **Email is sent** (via Supabase or Resend)
+4. **User clicks link** → automatically logs in
+5. **Profile is auto-created** via database trigger
+6. **User can access** all spaces they're invited to
+
+### Troubleshooting User Management
+
+**Magic links not working?**
+
+- Check spam folder
+- Verify `NEXT_PUBLIC_APP_URL` is set correctly
+- Check Supabase → Authentication → URL Configuration
+- Ensure redirect URLs include your domain
+
+**Users can still sign up?**
+
+- Double-check: Supabase → Authentication → Providers → Email
+- "Enable email signup" should be OFF
+- "Enable email login" should be ON
+
+**Emails not sending?**
+
+- Check Supabase Dashboard → Authentication → Logs
+- Verify RESEND_API_KEY is set (if using Resend)
+- Check Resend dashboard for delivery status
+
+**Admin panel not accessible?**
+
+- Make sure you're logged in
+- Check that middleware isn't blocking the route
+- Any authenticated user can currently access `/app/admin`
+
 ## How It Works
 
 ### Authentication Flow

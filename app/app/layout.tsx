@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions";
+import Link from "next/link";
 
 export default async function AppLayout({
   children,
@@ -18,6 +19,12 @@ export default async function AppLayout({
           <div className="flex justify-between h-16 items-center">
             <h1 className="text-xl font-bold text-gray-900">Bullet Journal</h1>
             <div className="flex items-center gap-4">
+              <Link
+                href="/app/admin"
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Admin
+              </Link>
               <span className="text-sm text-gray-600">{user?.email}</span>
               <form action={signOut}>
                 <button
