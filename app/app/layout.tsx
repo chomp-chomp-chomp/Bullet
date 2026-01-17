@@ -12,6 +12,17 @@ export default async function AppLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Check if user is admin
+  let isAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+    isAdmin = profile?.is_admin || false;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -19,12 +30,14 @@ export default async function AppLayout({
           <div className="flex justify-between h-16 items-center">
             <h1 className="text-xl font-bold text-gray-900">Bullet Journal</h1>
             <div className="flex items-center gap-4">
-              <Link
-                href="/app/admin"
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                Admin
-              </Link>
+              {isAdmin && (
+                <Link
+                  href="/app/admin"
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
+                  Admin
+                </Link>
+              )}
               <span className="text-sm text-gray-600">{user?.email}</span>
               <form action={signOut}>
                 <button

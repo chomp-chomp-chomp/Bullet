@@ -48,10 +48,21 @@ export async function getAllUsers() {
     throw new Error("Not authenticated");
   }
 
+  // Check if user is admin
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_admin) {
+    throw new Error("Unauthorized: Admin access required");
+  }
+
   // Get all profiles
   const { data: profiles, error } = await supabase
     .from("profiles")
-    .select("id, email, display_name, created_at")
+    .select("id, email, display_name, is_admin, created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -70,6 +81,17 @@ export async function deleteUser(userId: string) {
 
   if (!user) {
     throw new Error("Not authenticated");
+  }
+
+  // Check if user is admin
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_admin) {
+    throw new Error("Unauthorized: Admin access required");
   }
 
   // Don't allow deleting yourself
