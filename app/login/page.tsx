@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useFormStatus } from "react";
+import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 
 function SubmitButton() {
