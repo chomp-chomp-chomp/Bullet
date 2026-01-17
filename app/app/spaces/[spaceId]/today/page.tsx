@@ -49,7 +49,7 @@ export default async function TodayPage({
     .order("sort_key", { ascending: true });
 
   const membersList =
-    members?.map((m) => ({
+    members?.map((m: any) => ({
       id: m.profiles?.id || "",
       email: m.profiles?.email || "",
       display_name: m.profiles?.display_name || "",
