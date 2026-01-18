@@ -90,7 +90,7 @@ export default async function DebugPage() {
             </div>
           ) : (
             <div className="bg-yellow-50 p-4 rounded text-yellow-800">
-              Profile exists but is null (this shouldn't happen)
+              Profile exists but is null (this shouldn&apos;t happen)
             </div>
           )}
         </div>
@@ -110,7 +110,7 @@ export default async function DebugPage() {
             </pre>
           ) : (
             <div className="text-gray-600">
-              No space memberships found. This is why you can't see any spaces.
+              No space memberships found. This is why you can&apos;t see any spaces.
             </div>
           )}
         </div>
@@ -146,7 +146,7 @@ export default async function DebugPage() {
           </h2>
           <ol className="list-decimal pl-6 space-y-2 text-blue-900">
             <li>
-              If you see "Profile ERROR" above, run <code className="bg-blue-100 px-2 py-1 rounded">FORCE-FIX.sql</code> with your email
+              If you see &quot;Profile ERROR&quot; above, run <code className="bg-blue-100 px-2 py-1 rounded">FORCE-FIX.sql</code> with your email
             </li>
             <li>
               If is_admin is false, run <code className="bg-blue-100 px-2 py-1 rounded">FORCE-FIX.sql</code> with your email
