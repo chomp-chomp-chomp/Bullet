@@ -17,8 +17,9 @@ export function CreateSpaceForm() {
       await createSpace(formData);
       setName("");
     } catch (error) {
-      console.error(error);
-      alert("Failed to create space");
+      console.error("Failed to create space:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create space";
+      alert(`Unable to create space: ${errorMessage}`);
     } finally {
       setIsCreating(false);
     }

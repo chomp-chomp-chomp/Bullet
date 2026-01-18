@@ -178,6 +178,10 @@ CREATE POLICY "Users can view spaces they are members of"
     )
   );
 
+CREATE POLICY "Users can view spaces they created"
+  ON spaces FOR SELECT
+  USING (created_by = auth.uid());
+
 CREATE POLICY "Authenticated users can create spaces"
   ON spaces FOR INSERT
   WITH CHECK (auth.uid() = created_by);
