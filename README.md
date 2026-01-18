@@ -2,6 +2,18 @@
 
 A minimal shared bullet journal web app built with Next.js 14, TypeScript, Tailwind CSS, and Supabase.
 
+## 🚨 Important: Fix for Existing Deployments
+
+**Are you unable to create spaces or access the admin panel?**
+
+👉 **[Quick Fix Guide](QUICK-FIX.md)** - Takes 2 minutes to fix in Supabase
+
+Common errors this fixes:
+- "Unable to create space" - Server Components render error
+- "Access Denied - infinite recursion detected" when accessing `/app/admin`
+
+Run the SQL fix script in `supabase/APPLY-ALL-FIXES.sql` to resolve these issues.
+
 ## Features
 
 - **Spaces**: Create shared workspaces for teams
