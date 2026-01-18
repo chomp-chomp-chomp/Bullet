@@ -15,17 +15,19 @@ export default async function SpacesPage() {
     return null;
   }
 
-  // Get user's spaces
-  const { data: spaces } = await supabase
-    .from("spaces")
-    .select(
-      `
-      *,
-      space_members!inner(role)
-    `
-    )
-    .eq("space_members.user_id", user.id)
-    .order("created_at", { ascending: false });
+  // Get user's space memberships first
+  const { data: memberships } = await supabase
+    .from("space_members")
+    .select("space_id, role, spaces(*)")
+    .eq("user_id", user.id);
+
+  // Extract spaces from memberships
+  const spaces = memberships?.map((m: any) => ({
+    ...m.spaces,
+    role: m.role,
+  })).sort((a: any, b: any) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   // Get pending invites for this user
   const { data: pendingInvites } = await supabase
@@ -43,7 +45,7 @@ export default async function SpacesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Your Spaces</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Spaces</h2>
         <CreateSpaceForm />
       </div>
 
@@ -55,15 +57,15 @@ export default async function SpacesPage() {
         {spaces?.map((space) => (
           <div
             key={space.id}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition"
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition"
           >
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-gray-900">
                   {space.name}
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {space.space_members[0]?.role === "owner" ? "Owner" : "Member"}
+                <p className="text-sm text-gray-500">
+                  {space.role === "owner" ? "Owner" : "Member"}
                 </p>
               </div>
             </div>
@@ -71,7 +73,7 @@ export default async function SpacesPage() {
             <div className="space-y-3">
               <Link
                 href={`/app/spaces/${space.id}/today`}
-                className="block w-full text-center bg-blue-600 dark:bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition"
+                className="block w-full text-center bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition"
               >
                 Open Today
               </Link>
@@ -84,7 +86,7 @@ export default async function SpacesPage() {
         ))}
 
         {(!spaces || spaces.length === 0) && (
-          <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+          <div className="col-span-full text-center py-12 text-gray-500">
             No spaces yet. Create your first space above!
           </div>
         )}

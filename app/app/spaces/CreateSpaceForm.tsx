@@ -34,12 +34,12 @@ export function CreateSpaceForm() {
         onChange={(e) => setName(e.target.value)}
         placeholder="New space name..."
         required
-        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
       />
       <button
         type="submit"
         disabled={isCreating}
-        className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 transition"
+        className="bg-primary-600 dark:bg-primary-500 text-white px-6 py-2 rounded-md hover:bg-primary-700 dark:hover:bg-primary-600 disabled:opacity-50 transition"
       >
         {isCreating ? "Creating..." : "Create Space"}
       </button>

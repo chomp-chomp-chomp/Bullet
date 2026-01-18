@@ -49,7 +49,7 @@ export function InviteUserForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="user@example.com"
           required
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
 
@@ -68,23 +68,23 @@ export function InviteUserForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
         {loading ? "Sending Invitation..." : "Send Invitation"}
       </button>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-        <p className="text-xs text-blue-900 font-medium mb-1">
+      <div className="bg-primary-50 border border-primary-200 rounded-md p-3">
+        <p className="text-xs text-primary-900 font-medium mb-1">
           📝 How to invite users:
         </p>
-        <ol className="text-xs text-blue-800 list-decimal list-inside space-y-1">
+        <ol className="text-xs text-primary-800 list-decimal list-inside space-y-1">
           <li>
             Go to{" "}
             <a
               href="https://supabase.com/dashboard"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline hover:text-blue-900"
+              className="underline hover:text-primary-900"
             >
               Supabase Dashboard
             </a>
@@ -93,7 +93,7 @@ export function InviteUserForm() {
           <li>Click &quot;Invite user&quot;</li>
           <li>Enter the email address and send</li>
         </ol>
-        <p className="text-xs text-blue-700 mt-2">
+        <p className="text-xs text-primary-700 mt-2">
           They&apos;ll receive a magic link to access the app instantly.
         </p>
       </div>

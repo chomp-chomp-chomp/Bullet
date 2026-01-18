@@ -17,28 +17,37 @@ export async function createSpace(formData: FormData) {
     throw new Error("Not authenticated");
   }
 
-  // Create space
-  const { data: space, error: spaceError } = await supabase
-    .from("spaces")
-    .insert({ name, created_by: user.id })
-    .select()
-    .single();
+  try {
+    // Create space
+    const { data: space, error: spaceError } = await supabase
+      .from("spaces")
+      .insert({ name, created_by: user.id })
+      .select()
+      .single();
 
-  if (spaceError) {
-    throw new Error(spaceError.message);
+    if (spaceError) {
+      console.error("Space creation error:", spaceError);
+      throw new Error(`Failed to create space: ${spaceError.message}`);
+    }
+
+    // Add creator as owner
+    const { error: memberError } = await supabase
+      .from("space_members")
+      .insert({ space_id: space.id, user_id: user.id, role: "owner" });
+
+    if (memberError) {
+      console.error("Member creation error:", memberError);
+      // Try to clean up the space if member creation fails
+      await supabase.from("spaces").delete().eq("id", space.id);
+      throw new Error(`Failed to add you as space member: ${memberError.message}`);
+    }
+
+    revalidatePath("/app/spaces");
+    return { success: true, spaceId: space.id };
+  } catch (error: any) {
+    console.error("Create space error:", error);
+    throw new Error(error.message || "Failed to create space");
   }
-
-  // Add creator as owner
-  const { error: memberError } = await supabase
-    .from("space_members")
-    .insert({ space_id: space.id, user_id: user.id, role: "owner" });
-
-  if (memberError) {
-    throw new Error(memberError.message);
-  }
-
-  revalidatePath("/app/spaces");
-  return { success: true, spaceId: space.id };
 }
 
 export async function inviteToSpace(spaceId: string, email: string) {

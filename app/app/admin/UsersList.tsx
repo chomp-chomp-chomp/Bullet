@@ -41,7 +41,7 @@ export function UsersList({
 
   if (users.length === 0) {
     return (
-      <p className="text-gray-500 dark:text-gray-400 text-center py-8">No users found.</p>
+      <p className="text-gray-500 text-center py-8">No users found.</p>
     );
   }
 
@@ -50,24 +50,24 @@ export function UsersList({
       {users.map((user) => (
         <div
           key={user.id}
-          className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+          className="flex items-center justify-between p-4 bg-gray-50 rounded-md hover:bg-gray-100 transition"
         >
           <div className="flex-1">
-            <div className="font-medium text-gray-900 dark:text-white">
+            <div className="font-medium text-gray-900">
               {user.display_name || user.email}
               {user.id === currentUserId && (
-                <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                <span className="ml-2 text-xs bg-primary-100 text-primary-800 px-2 py-1 rounded">
                   You
                 </span>
               )}
               {user.is_admin && (
-                <span className="ml-2 text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded font-medium">
+                <span className="ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-medium">
                   Admin
                 </span>
               )}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">{user.email}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <div className="text-sm text-gray-600">{user.email}</div>
+            <div className="text-xs text-gray-500 mt-1">
               Joined {new Date(user.created_at).toLocaleDateString()}
             </div>
           </div>
@@ -76,7 +76,7 @@ export function UsersList({
             <button
               onClick={() => handleDelete(user.id, user.email)}
               disabled={deletingId === user.id}
-              className="ml-4 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ml-4 text-sm text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {deletingId === user.id ? "Removing..." : "Remove"}
             </button>
