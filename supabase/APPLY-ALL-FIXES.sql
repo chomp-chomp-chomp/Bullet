@@ -30,7 +30,8 @@ CREATE POLICY "Admins can view all profiles"
 
 -- Fix 3: Add policy to allow space creators to view their spaces
 -- This fixes the circular dependency when creating spaces
-CREATE POLICY IF NOT EXISTS "Users can view spaces they created"
+DROP POLICY IF EXISTS "Users can view spaces they created" ON spaces;
+CREATE POLICY "Users can view spaces they created"
   ON spaces FOR SELECT
   USING (created_by = auth.uid());
 
