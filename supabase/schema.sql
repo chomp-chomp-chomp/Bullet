@@ -191,17 +191,22 @@ CREATE POLICY "Only space owners can delete spaces"
   USING (created_by = auth.uid());
 
 -- Space members RLS Policies
-CREATE POLICY "Users can view members of their spaces"
+-- Fixed to avoid infinite recursion by checking spaces table instead of space_members
+CREATE POLICY "Space creators can view all members"
   ON space_members FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM space_members sm
-      WHERE sm.space_id = space_members.space_id
-        AND sm.user_id = auth.uid()
+      SELECT 1 FROM spaces
+      WHERE spaces.id = space_members.space_id
+        AND spaces.created_by = auth.uid()
     )
   );
 
-CREATE POLICY "Only space owners can add members"
+CREATE POLICY "Users can view their own memberships"
+  ON space_members FOR SELECT
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Space creators can add members"
   ON space_members FOR INSERT
   WITH CHECK (
     EXISTS (
@@ -211,7 +216,7 @@ CREATE POLICY "Only space owners can add members"
     )
   );
 
-CREATE POLICY "Only space owners can remove members"
+CREATE POLICY "Space creators can remove members"
   ON space_members FOR DELETE
   USING (
     EXISTS (
