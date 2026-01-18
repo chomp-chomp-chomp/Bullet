@@ -143,23 +143,23 @@ export default async function DebugPage() {
         </div>
 
         {/* Action Items */}
-        <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4 text-blue-900">
+        <div className="bg-primary-50 border border-primary-200 p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4 text-primary-900">
             What to do next:
           </h2>
-          <ol className="list-decimal pl-6 space-y-2 text-blue-900">
+          <ol className="list-decimal pl-6 space-y-2 text-primary-900">
             <li>
-              If you see &quot;Profile ERROR&quot; above, run <code className="bg-blue-100 px-2 py-1 rounded">FORCE-FIX.sql</code> with your email
+              If you see &quot;Profile ERROR&quot; above, run <code className="bg-primary-100 px-2 py-1 rounded">FORCE-FIX.sql</code> with your email
             </li>
             <li>
-              If is_admin is false, run <code className="bg-blue-100 px-2 py-1 rounded">FORCE-FIX.sql</code> with your email
+              If is_admin is false, run <code className="bg-primary-100 px-2 py-1 rounded">FORCE-FIX.sql</code> with your email
             </li>
             <li>
               After running the fix, refresh this page to verify
             </li>
             <li>
               If everything looks good here but still having issues, run{" "}
-              <code className="bg-blue-100 px-2 py-1 rounded">DIAGNOSE.sql</code> and send me the results
+              <code className="bg-primary-100 px-2 py-1 rounded">DIAGNOSE.sql</code> and send me the results
             </li>
           </ol>
         </div>
