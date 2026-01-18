@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions";
 import Link from "next/link";
 
+// Force dynamic rendering for authenticated routes
+export const dynamic = 'force-dynamic';
+
 export default async function AppLayout({
   children,
 }: {
