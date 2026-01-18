@@ -15,8 +15,88 @@ export default async function AdminPage() {
     redirect("/login");
   }
 
+  // Check if user is admin first
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  // If profile doesn't exist or is_admin is not set, show error
+  if (profileError || !profile?.is_admin) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Link
+            href="/app/spaces"
+            className="text-sm text-blue-600 hover:text-blue-700 mb-2 inline-block"
+          >
+            ← Back to Spaces
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+        </div>
+
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-red-900 mb-4">
+            Access Denied
+          </h2>
+          <div className="space-y-4 text-sm text-red-800">
+            <p>
+              <strong>Error:</strong>{" "}
+              {profileError
+                ? `Your profile does not exist (${profileError.message})`
+                : "You are not an admin"}
+            </p>
+            <div className="bg-white rounded p-4 border border-red-300">
+              <p className="font-semibold mb-2">To fix this:</p>
+              <ol className="list-decimal list-inside space-y-2">
+                <li>
+                  Go to your Supabase Dashboard → SQL Editor
+                </li>
+                <li>
+                  Open <code className="bg-red-100 px-2 py-1 rounded">FORCE-FIX.sql</code>
+                </li>
+                <li>
+                  Replace <code className="bg-red-100 px-2 py-1 rounded">&apos;YOUR_EMAIL@EXAMPLE.COM&apos;</code> with your email: <strong>{user.email}</strong>
+                </li>
+                <li>Run the script</li>
+                <li>Refresh this page</li>
+              </ol>
+            </div>
+            <p className="text-xs">
+              Your email: <code className="bg-red-100 px-2 py-1 rounded">{user.email}</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Get all users
-  const users = await getAllUsers();
+  let users = [];
+  try {
+    users = await getAllUsers();
+  } catch (error: any) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Link
+            href="/app/spaces"
+            className="text-sm text-blue-600 hover:text-blue-700 mb-2 inline-block"
+          >
+            ← Back to Spaces
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-red-900 mb-4">
+            Error Loading Users
+          </h2>
+          <p className="text-sm text-red-800">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
