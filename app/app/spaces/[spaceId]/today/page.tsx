@@ -61,20 +61,20 @@ export default async function TodayPage({
         <div>
           <Link
             href="/app/spaces"
-            className="text-sm text-blue-600 hover:text-blue-700 mb-2 inline-block"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mb-2 inline-block"
           >
             ← Back to Spaces
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             {space?.name || "Space"}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Today: {new Date().toLocaleDateString()}
           </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <QuickAdd spaceId={spaceId} pageId={pageId} />
         <BulletList
           bullets={bullets || []}
