@@ -11,9 +11,9 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full bg-dark-text text-dark-bg py-3 px-4 rounded-md hover:bg-dark-text/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+      className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
     >
-      {pending ? "sending..." : "send magic link"}
+      {pending ? "Sending..." : "Send Magic Link"}
     </button>
   );
 }
@@ -45,14 +45,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-bg px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h1 className="text-3xl font-semibold text-center text-dark-text tracking-tight">
-            bullet journal
+          <h1 className="text-3xl font-semibold text-center text-gray-900 tracking-tight">
+            Bullet Journal
           </h1>
-          <p className="mt-2 text-center text-dark-muted">
-            sign in with your email
+          <p className="mt-2 text-center text-gray-600">
+            Sign in with your email
           </p>
         </div>
 
@@ -69,8 +69,8 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="appearance-none rounded-md relative block w-full px-4 py-3 border border-dark-border bg-dark-surface placeholder-dark-muted text-dark-text focus:outline-none focus:ring-2 focus:ring-dark-text/20 focus:border-dark-text transition-all sm:text-sm"
-              placeholder="enter your email"
+              className="appearance-none rounded-md relative block w-full px-4 py-3 border border-gray-300 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm"
+              placeholder="Enter your email"
             />
           </div>
 
@@ -78,8 +78,8 @@ export default function LoginPage() {
             <div
               className={`p-3 rounded-md text-sm ${
                 message.type === "error"
-                  ? "bg-red-950/50 text-red-400 border border-red-900/50"
-                  : "bg-green-950/50 text-green-400 border border-green-900/50"
+                  ? "bg-red-50 text-red-800 border border-red-200"
+                  : "bg-green-50 text-green-800 border border-green-200"
               }`}
             >
               {message.text}
@@ -89,8 +89,8 @@ export default function LoginPage() {
           <SubmitButton />
         </form>
 
-        <p className="text-center text-xs text-dark-muted mt-4">
-          we&apos;ll send you a magic link to sign in without a password
+        <p className="text-center text-xs text-gray-500 mt-4">
+          We&apos;ll send you a magic link to sign in without a password
         </p>
       </div>
     </div>
