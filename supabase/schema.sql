@@ -142,17 +142,6 @@ CREATE POLICY "Users can view own profile"
   ON profiles FOR SELECT
   USING (auth.uid() = id);
 
-CREATE POLICY "Users can view profiles of space members"
-  ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM space_members sm1
-      JOIN space_members sm2 ON sm1.space_id = sm2.space_id
-      WHERE sm1.user_id = auth.uid()
-        AND sm2.user_id = profiles.id
-    )
-  );
-
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
@@ -168,13 +157,16 @@ CREATE POLICY "Admins can view all profiles"
   );
 
 -- Spaces RLS Policies
-CREATE POLICY "Users can view spaces they are members of"
+-- Split into two policies to avoid recursion with space_members
+CREATE POLICY "Users can view their own spaces"
+  ON spaces FOR SELECT
+  USING (created_by = auth.uid());
+
+CREATE POLICY "Users can view member spaces"
   ON spaces FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM space_members
-      WHERE space_members.space_id = spaces.id
-        AND space_members.user_id = auth.uid()
+    id IN (
+      SELECT space_id FROM space_members WHERE user_id = auth.uid()
     )
   );
 
