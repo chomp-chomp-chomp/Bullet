@@ -10,6 +10,18 @@ CREATE OR REPLACE FUNCTION auth_email() RETURNS text AS $$
   SELECT current_setting('request.jwt.claim.email', true)::text;
 $$ LANGUAGE sql STABLE;
 
+-- Helper function to check if current user is admin
+-- Uses SECURITY DEFINER to bypass RLS and avoid infinite recursion
+CREATE OR REPLACE FUNCTION is_admin() RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid()
+      AND is_admin = true
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- ============================================================
 -- STEP 2: Create All Tables (without RLS policies)
 -- ============================================================
@@ -159,13 +171,7 @@ CREATE POLICY "Users can update own profile"
 
 CREATE POLICY "Admins can view all profiles"
   ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-        AND profiles.is_admin = true
-    )
-  );
+  USING (is_admin());
 
 -- Spaces RLS Policies
 CREATE POLICY "Users can view spaces they are members of"
