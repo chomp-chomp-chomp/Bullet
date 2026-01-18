@@ -164,7 +164,7 @@ CREATE POLICY "Admins can view all profiles"
 
 -- Spaces RLS Policies
 -- Split into two policies to avoid recursion with space_members
-CREATE POLICY "Users can view their own spaces"
+CREATE POLICY "Users can view spaces they created"
   ON spaces FOR SELECT
   USING (created_by = auth.uid());
 
@@ -175,10 +175,6 @@ CREATE POLICY "Users can view member spaces"
       SELECT space_id FROM space_members WHERE user_id = auth.uid()
     )
   );
-
-CREATE POLICY "Users can view spaces they created"
-  ON spaces FOR SELECT
-  USING (created_by = auth.uid());
 
 CREATE POLICY "Authenticated users can create spaces"
   ON spaces FOR INSERT
