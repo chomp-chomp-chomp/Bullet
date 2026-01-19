@@ -3,6 +3,7 @@ import { CreateSpaceForm } from "./CreateSpaceForm";
 import { InviteForm } from "./InviteForm";
 import { PendingInvites } from "./PendingInvites";
 import Link from "next/link";
+import { logServerError } from "@/lib/error-logger";
 
 export default async function SpacesPage() {
   const supabase = await createClient();
@@ -15,20 +16,40 @@ export default async function SpacesPage() {
     return null;
   }
 
-  // Get user's space memberships
-  const { data: memberships } = await supabase
+  // Get user's space memberships with error handling
+  const { data: memberships, error: membershipError } = await supabase
     .from("space_members")
     .select("space_id, role")
     .eq("user_id", user.id);
+
+  if (membershipError) {
+    logServerError(membershipError, {
+      userId: user.id,
+      component: 'SpacesPage',
+      action: 'fetch_memberships',
+      metadata: { errorCode: membershipError.code },
+    });
+    throw new Error(`Failed to load your spaces: ${membershipError.message}`);
+  }
 
   // Get the actual space details separately to avoid RLS issues with relation embedding
   let spaces = null;
   if (memberships && memberships.length > 0) {
     const spaceIds = memberships.map((m) => m.space_id);
-    const { data: spacesData } = await supabase
+    const { data: spacesData, error: spacesError } = await supabase
       .from("spaces")
       .select("*")
       .in("id", spaceIds);
+
+    if (spacesError) {
+      logServerError(spacesError, {
+        userId: user.id,
+        component: 'SpacesPage',
+        action: 'fetch_spaces',
+        metadata: { spaceIds, errorCode: spacesError.code },
+      });
+      throw new Error(`Failed to load space details: ${spacesError.message}`);
+    }
 
     // Combine spaces with their roles
     spaces = spacesData?.map((space) => {
@@ -43,12 +64,23 @@ export default async function SpacesPage() {
   }
 
   // Get pending invites for this user
-  const { data: invitesData } = await supabase
+  const { data: invitesData, error: invitesError } = await supabase
     .from("space_invites")
     .select("*")
     .eq("email", user.email!)
     .is("accepted_at", null)
     .order("created_at", { ascending: false });
+
+  if (invitesError) {
+    logServerError(invitesError, {
+      userId: user.id,
+      component: 'SpacesPage',
+      action: 'fetch_invites',
+      metadata: { errorCode: invitesError.code },
+    });
+    // Don't throw here, invites are not critical
+    console.warn("Failed to load invites:", invitesError);
+  }
 
   // Get space names for invites separately to avoid RLS issues
   let pendingInvites = null;

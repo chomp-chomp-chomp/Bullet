@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { UsersList } from "./UsersList";
 import { getAllUsers } from "./actions";
 import Link from "next/link";
+import { logServerError } from "@/lib/error-logger";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -21,6 +22,15 @@ export default async function AdminPage() {
     .select("is_admin")
     .eq("id", user.id)
     .single();
+
+  if (profileError) {
+    logServerError(profileError, {
+      userId: user.id,
+      component: 'AdminPage',
+      action: 'fetch_profile',
+      metadata: { errorCode: profileError.code },
+    });
+  }
 
   // If profile doesn't exist or is_admin is not set, show error
   if (profileError || !profile?.is_admin) {
@@ -77,6 +87,12 @@ export default async function AdminPage() {
   try {
     users = await getAllUsers();
   } catch (error: any) {
+    logServerError(error, {
+      userId: user.id,
+      component: 'AdminPage',
+      action: 'fetch_all_users',
+    });
+    
     return (
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
