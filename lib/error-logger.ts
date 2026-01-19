@@ -19,7 +19,15 @@ interface ErrorDetails {
 }
 
 /**
+ * Type guard to check if error has digest property
+ */
+function hasDigest(error: unknown): error is Error & { digest: string } {
+  return error instanceof Error && 'digest' in error && typeof (error as any).digest === 'string';
+}
+
+/**
  * Logs detailed error information to the console (can be extended to log to external services)
+ * Works on both client and server side
  * @param error - The error object to log
  * @param context - Additional context about where the error occurred
  */
@@ -35,8 +43,8 @@ export function logServerError(error: unknown, context?: ErrorLogContext): void 
     errorDetails.stack = error.stack;
     
     // Capture digest property if it exists (Next.js Server Component errors)
-    if ('digest' in error) {
-      errorDetails.digest = (error as any).digest;
+    if (hasDigest(error)) {
+      errorDetails.digest = error.digest;
     }
   } else if (typeof error === 'string') {
     errorDetails.message = error;
@@ -74,6 +82,7 @@ export function logServerError(error: unknown, context?: ErrorLogContext): void 
 
 /**
  * Formats error for user display (without sensitive details)
+ * Safe to use on both client and server
  * @param error - The error to format
  * @returns User-friendly error message
  */
