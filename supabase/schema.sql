@@ -22,6 +22,30 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Helper function to check if current user is a member of a space
+-- Uses SECURITY DEFINER to bypass RLS and avoid infinite recursion
+CREATE OR REPLACE FUNCTION is_space_member(space_uuid uuid) RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.space_members
+    WHERE space_id = space_uuid
+      AND user_id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if current user owns/created a space
+-- Uses SECURITY DEFINER to bypass RLS and avoid infinite recursion
+CREATE OR REPLACE FUNCTION is_space_owner(space_uuid uuid) RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.spaces
+    WHERE id = space_uuid
+      AND created_by = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- ============================================================
 -- STEP 2: Create All Tables (without RLS policies)
 -- ============================================================
@@ -163,18 +187,14 @@ CREATE POLICY "Admins can view all profiles"
   USING (is_admin());
 
 -- Spaces RLS Policies
--- Split into two policies to avoid recursion with space_members
+-- Uses helper functions to avoid infinite recursion with space_members
 CREATE POLICY "Users can view spaces they created"
   ON spaces FOR SELECT
   USING (created_by = auth.uid());
 
 CREATE POLICY "Users can view member spaces"
   ON spaces FOR SELECT
-  USING (
-    id IN (
-      SELECT space_id FROM space_members WHERE user_id = auth.uid()
-    )
-  );
+  USING (is_space_member(id));
 
 CREATE POLICY "Authenticated users can create spaces"
   ON spaces FOR INSERT
@@ -189,40 +209,22 @@ CREATE POLICY "Only space owners can delete spaces"
   USING (created_by = auth.uid());
 
 -- Space members RLS Policies
--- Fixed to avoid infinite recursion by checking spaces table instead of space_members
-CREATE POLICY "Space creators can view all members"
-  ON space_members FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM spaces
-      WHERE spaces.id = space_members.space_id
-        AND spaces.created_by = auth.uid()
-    )
-  );
-
+-- Uses helper functions to avoid infinite recursion with spaces table
 CREATE POLICY "Users can view their own memberships"
   ON space_members FOR SELECT
   USING (user_id = auth.uid());
 
-CREATE POLICY "Space creators can add members"
-  ON space_members FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM spaces
-      WHERE spaces.id = space_members.space_id
-        AND spaces.created_by = auth.uid()
-    )
-  );
+CREATE POLICY "Space owners can view members"
+  ON space_members FOR SELECT
+  USING (is_space_owner(space_id));
 
-CREATE POLICY "Space creators can remove members"
+CREATE POLICY "Space owners can add members"
+  ON space_members FOR INSERT
+  WITH CHECK (is_space_owner(space_id));
+
+CREATE POLICY "Space owners can remove members"
   ON space_members FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM spaces
-      WHERE spaces.id = space_members.space_id
-        AND spaces.created_by = auth.uid()
-    )
-  );
+  USING (is_space_owner(space_id));
 
 -- Space invites RLS Policies
 CREATE POLICY "Space owners can view invites for their spaces"
