@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { logServerError } from "@/lib/error-logger";
 
 // Space actions
 export async function createSpace(formData: FormData) {
@@ -26,7 +27,12 @@ export async function createSpace(formData: FormData) {
       .single();
 
     if (spaceError) {
-      console.error("Space creation error:", spaceError);
+      logServerError(spaceError, {
+        userId: user.id,
+        action: 'createSpace',
+        component: 'spaces.insert',
+        metadata: { spaceName: name, errorCode: spaceError.code },
+      });
       throw new Error(`Failed to create space: ${spaceError.message}`);
     }
 
@@ -36,7 +42,12 @@ export async function createSpace(formData: FormData) {
       .insert({ space_id: space.id, user_id: user.id, role: "owner" });
 
     if (memberError) {
-      console.error("Member creation error:", memberError);
+      logServerError(memberError, {
+        userId: user.id,
+        action: 'createSpace',
+        component: 'space_members.insert',
+        metadata: { spaceId: space.id, errorCode: memberError.code },
+      });
       // Try to clean up the space if member creation fails
       await supabase.from("spaces").delete().eq("id", space.id);
       throw new Error(`Failed to add you as space member: ${memberError.message}`);
@@ -45,7 +56,12 @@ export async function createSpace(formData: FormData) {
     revalidatePath("/app/spaces");
     return { success: true, spaceId: space.id };
   } catch (error: any) {
-    console.error("Create space error:", error);
+    logServerError(error, {
+      userId: user.id,
+      action: 'createSpace',
+      component: 'actions.createSpace',
+      metadata: { spaceName: name },
+    });
     throw new Error(error.message || "Failed to create space");
   }
 }
@@ -53,11 +69,22 @@ export async function createSpace(formData: FormData) {
 export async function inviteToSpace(spaceId: string, email: string) {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { error } = await supabase
     .from("space_invites")
     .insert({ space_id: spaceId, email, role: "member" });
 
   if (error) {
+    logServerError(error, {
+      userId: user?.id,
+      action: 'inviteToSpace',
+      component: 'space_invites.insert',
+      metadata: { spaceId, inviteeEmail: email, errorCode: error.code },
+    });
+    
     if (error.code === "23505") {
       throw new Error("User already invited");
     }
@@ -87,6 +114,12 @@ export async function acceptInvite(inviteId: string) {
     .single();
 
   if (inviteError || !invite) {
+    logServerError(inviteError || new Error("Invite not found"), {
+      userId: user.id,
+      action: 'acceptInvite',
+      component: 'space_invites.select',
+      metadata: { inviteId },
+    });
     throw new Error("Invite not found");
   }
 
@@ -100,6 +133,12 @@ export async function acceptInvite(inviteId: string) {
     });
 
   if (memberError) {
+    logServerError(memberError, {
+      userId: user.id,
+      action: 'acceptInvite',
+      component: 'space_members.insert',
+      metadata: { inviteId, spaceId: invite.space_id, errorCode: memberError.code },
+    });
     throw new Error(memberError.message);
   }
 
