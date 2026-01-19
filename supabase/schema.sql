@@ -227,15 +227,10 @@ CREATE POLICY "Space owners can remove members"
   USING (is_space_owner(space_id));
 
 -- Space invites RLS Policies
+-- Uses is_space_owner() helper for consistency
 CREATE POLICY "Space owners can view invites for their spaces"
   ON space_invites FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM spaces
-      WHERE spaces.id = space_invites.space_id
-        AND spaces.created_by = auth.uid()
-    )
-  );
+  USING (is_space_owner(space_id));
 
 CREATE POLICY "Invitees can view their pending invites"
   ON space_invites FOR SELECT
@@ -245,23 +240,11 @@ CREATE POLICY "Invitees can view their pending invites"
 
 CREATE POLICY "Space owners can create invites"
   ON space_invites FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM spaces
-      WHERE spaces.id = space_invites.space_id
-        AND spaces.created_by = auth.uid()
-    )
-  );
+  WITH CHECK (is_space_owner(space_id));
 
 CREATE POLICY "Space owners can delete invites"
   ON space_invites FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM spaces
-      WHERE spaces.id = space_invites.space_id
-        AND spaces.created_by = auth.uid()
-    )
-  );
+  USING (is_space_owner(space_id));
 
 CREATE POLICY "Invitees can accept their invites"
   ON space_invites FOR UPDATE
@@ -269,24 +252,15 @@ CREATE POLICY "Invitees can accept their invites"
   WITH CHECK (email = auth_email());
 
 -- Daily pages RLS Policies
+-- Uses is_space_member() helper to avoid RLS complications
 CREATE POLICY "Space members can view daily pages"
   ON daily_pages FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM space_members
-      WHERE space_members.space_id = daily_pages.space_id
-        AND space_members.user_id = auth.uid()
-    )
-  );
+  USING (is_space_member(space_id));
 
 CREATE POLICY "Space members can create daily pages"
   ON daily_pages FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM space_members
-      WHERE space_members.space_id = daily_pages.space_id
-        AND space_members.user_id = auth.uid()
-    )
+    is_space_member(space_id)
     AND created_by = auth.uid()
   );
 
@@ -294,44 +268,29 @@ CREATE POLICY "Page creators and owners can update daily pages"
   ON daily_pages FOR UPDATE
   USING (
     created_by = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM spaces
-      WHERE spaces.id = daily_pages.space_id
-        AND spaces.created_by = auth.uid()
-    )
+    is_space_owner(space_id)
   );
 
 CREATE POLICY "Page creators and owners can delete daily pages"
   ON daily_pages FOR DELETE
   USING (
     created_by = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM spaces
-      WHERE spaces.id = daily_pages.space_id
-        AND spaces.created_by = auth.uid()
-    )
+    is_space_owner(space_id)
   );
 
 -- Bullets RLS Policies
+-- Uses is_space_member() helper to avoid RLS complications
 CREATE POLICY "Space members can view non-private bullets"
   ON bullets FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM space_members
-      WHERE space_members.space_id = bullets.space_id
-        AND space_members.user_id = auth.uid()
-    )
+    is_space_member(space_id)
     AND (is_private = false OR created_by = auth.uid())
   );
 
 CREATE POLICY "Space members can create their own bullets"
   ON bullets FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM space_members
-      WHERE space_members.space_id = bullets.space_id
-        AND space_members.user_id = auth.uid()
-    )
+    is_space_member(space_id)
     AND created_by = auth.uid()
   );
 

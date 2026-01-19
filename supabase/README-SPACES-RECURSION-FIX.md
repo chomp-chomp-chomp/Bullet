@@ -78,12 +78,24 @@ CREATE POLICY "Users can view member spaces"
 
 ## How to Apply the Fix
 
-### Option 1: Run the Fix Script (Recommended)
+### Option 1: Run the Fix Scripts (Recommended)
+For existing databases, run both scripts in order:
+
+**Step 1: Fix the recursion issue**
 1. Go to your Supabase Dashboard → SQL Editor
 2. Open the file `/supabase/FIX-SPACES-RECURSION.sql`
 3. Copy and paste the entire content into the SQL Editor
 4. Click "Run"
 5. Verify the output shows "Fix applied successfully!"
+
+**Step 2: Fix bullet journal permissions**
+1. In the same SQL Editor
+2. Open the file `/supabase/FIX-BULLET-JOURNAL-PERMISSIONS.sql`
+3. Copy and paste the entire content into the SQL Editor
+4. Click "Run"
+5. Verify that bullet journal items now appear correctly
+
+> **Note:** Both scripts are needed! The first script creates the helper functions and fixes the core recursion issue. The second script updates `daily_pages`, `bullets`, and `space_invites` policies to use these helper functions consistently.
 
 ### Option 2: Manual Application
 If you prefer to apply manually, the script does the following:
@@ -129,11 +141,28 @@ All queries should execute successfully without "infinite recursion" errors.
 | `spaces` | Queried `space_members` table directly | Uses `is_space_member()` function |
 | `space_members` | Queried `spaces` table directly | Uses `is_space_owner()` function |
 
+## Related Issue: Bullet Journal Items Not Showing
+
+After applying the recursion fix, you may notice that bullet journal items don't show up when you try to add them. This is because several other tables (`daily_pages`, `bullets`, `space_invites`) were still using direct queries to `space_members` and `spaces` in their RLS policies.
+
+### Why This Happens
+While the original fix prevents infinite recursion, it introduced stricter permission checking on `space_members`. When other tables' policies query `space_members` directly, they now encounter RLS restrictions that can prevent the queries from working as expected.
+
+### The Solution
+Update all related policies to use the same `SECURITY DEFINER` helper functions (`is_space_member()` and `is_space_owner()`) for consistency. This ensures:
+- All permissions work correctly
+- No RLS complications when policies query across tables
+- Better performance with function-based checks
+- Consistent security model throughout the database
+
+The `FIX-BULLET-JOURNAL-PERMISSIONS.sql` script handles this automatically.
+
 ## Impact on Functionality
 ✅ **No change to application behavior** - All security rules remain the same
 ✅ **Same access control** - Users can only see what they're authorized to see
 ✅ **Better performance** - Functions with SECURITY DEFINER can be more efficient
 ✅ **No recursion errors** - The circular dependency is eliminated
+✅ **Bullet journal works correctly** - All items display and can be added/edited as expected
 
 ## For Future Development
 When creating new RLS policies:
